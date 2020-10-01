@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ReferenceMaterial
+  m_Name: BG Material
   m_Shader: {fileID: -6465566751694194690, guid: a5c31aaab734cff4495ebe691d6b4046,
     type: 3}
   m_ShaderKeywords: 
@@ -73,9 +73,9 @@ Material:
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - is_3d: 1
+    - is_3d: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - tex_col: {r: 1, g: 1, b: 0, a: 0}
+    - tex_col: {r: 0.392, g: 0.584, b: 0.929, a: 0}
   m_BuildTextureStacks: []
