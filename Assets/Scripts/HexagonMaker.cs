@@ -25,16 +25,22 @@ public class HexagonMaker : MonoBehaviour
     public float shapePulseTime = .4f;
     [Tooltip("How close together must two click be to count as a double-click, in seconds.")]
     public float doubleClickTime = .2f;
+    [Tooltip("Time, in seconds, between when the game loads and the helpful tip to double-click appears")]
+    public float hintTime = 4f;
 
     //Public variables not intended as constants:
     [Tooltip("True if this is the reference polygon that you double-click on. False if it's the user-controlled polygon.")]
     public bool isReferencePolygon = false;
+    [Tooltip("The particle syetem to enable to show the player the double-click hint.")]
+    public ParticleSystem hintParticleSystem;
 
     private MeshFilter meshFilter;
     private MeshCollider meshCollider;
     private MeshRenderer meshRenderer;
     private float timeSinceLastClick = Mathf.Infinity;
     private float shapePulseAmount = 0;
+    private float timeSinceHexLoad = 0;
+    private bool hintShown = false;
 
     //Reference Code obtained from https://docs.unity3d.com/Manual/Example-CreatingaBillboardPlane.html. You'll note
     //it's basically unrecognizable now. ;)
@@ -54,7 +60,7 @@ public class HexagonMaker : MonoBehaviour
 
         if (!isReferencePolygon)
         {
-            //this.gameObject.SetActive(false);
+            this.gameObject.SetActive(false);
         }
     }
 
@@ -73,6 +79,16 @@ public class HexagonMaker : MonoBehaviour
             float scale = Mathf.Lerp(1.0f, pulseSize, t);
             this.transform.localScale = new Vector3(scale, scale, scale);
             shapePulseAmount -= Time.deltaTime;
+        }
+
+        if (this.isReferencePolygon)
+        {
+            timeSinceHexLoad += Time.deltaTime;
+            if (timeSinceHexLoad > hintTime && !hintParticleSystem.isPlaying && !hintShown)
+            {
+                hintParticleSystem.Play();
+                hintShown = true;
+            }
         }
     }
 
@@ -161,6 +177,9 @@ public class HexagonMaker : MonoBehaviour
         {
             SubmitMatch();
             timeSinceLastClick = Mathf.Infinity;
+            hintParticleSystem.Stop();
+            hintParticleSystem.Clear();
+            hintShown = true;
         }
         else
         {

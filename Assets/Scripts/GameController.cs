@@ -40,28 +40,64 @@ public class GameController : MonoBehaviour
     public float tweenEasingIntensity = 2;
     public float hexSeperation = 2.5f;
 
+    public float timeThatUnlockTextLasts = 1.5f;
+    public float timeBeforeUnlockTextFades = 1f;
+    public float timeThatUnlockPulseLasts = .4f;
+    public float sizeOfPulse = 1.5f;
+    public float rotationSpeed = 1;
+    public float additionalRotationSpeedPerLevel = 1;
+    public float timeBetweenScoreShownAndScored = 1;
+    public float maxTimeForScoreToBeScored = 2;
+
     //Public variables
     public HexagonMaker referenceHex;
     public HexagonMaker userHex;
     public PolygonUISlider[] attributeSliders = new PolygonUISlider[10];
     public TextMeshProUGUI matchText;
     public TextMeshProUGUI unlockText;
+    public TextMeshProUGUI unlockPulseText;
+    public TextMeshProUGUI timerText;
+    public TextMeshProUGUI scoreText;
+    public ParticleSystem matchParticles;
+    public ParticleSystem failParticles;
+    public Light rotatingLight;
+    public Light ambientLight;
 
     private int levelNumber = 0;
     private float remainingTween;
     private bool moveHexes;
     private Material referenceMaterial;
     private Material userMaterial;
-    private float[] referenceAttributes = new float[10];
-    private float[] userAttributes = new float[10];
+    private readonly float[] referenceAttributes = new float[10];
+    private readonly float[] userAttributes = new float[10];
+    private readonly int[] slidersByLevelNumber = new int[] { 1, 1, 2, 2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     private float matchBarTargetOpacity;
     private float matchBarCurrentOpacity;
     private bool matchBarIsFading;
     private bool barsAreMoving;
     private float barTweenPosition;
+    private float timeSinceUnlockTextAppeared = 0;
     private bool unlockTextIsFading;
-    private float unlockTextCurrentOpacity;
     private bool matchBarAppeared = false;
+    private bool shownHint2;
+    private bool matchParticlesPlayed;
+    private bool hexSpin = false;
+    private float rotationAmount = 0;
+    private bool timerOn = false;
+    private float timeLeft = 0;
+    private bool timerFinishedFadingIn = false;
+    private bool scoreFinishedFadingIn = false;
+    private bool scoreStartedFadingIn = false;
+    private float pointsCurrentOpacity = 0;
+    private float timerCurrentOpacity = 0;
+    private int totalScore = 0;
+    private int timeUntilPointsAreScored = 0;
+    private float timeSinceLastPointScored = 0;
+    private int unscoredPoints = 0;
+    private bool hexFacing = false;
+    private float inwardFacingDirection = 0;
+    private float lightBrightness = 0;
+    private float timeSinceScoringAppeared = 0;
 
     void Start()
     {
@@ -104,7 +140,103 @@ public class GameController : MonoBehaviour
                 matchBarCurrentOpacity = matchBarTargetOpacity;
                 matchBarIsFading = false;
             }
-            matchText.color = new Color(1, 1, 1, matchBarCurrentOpacity);
+            matchText.color = new Color(matchText.color.r, matchText.color.g, matchText.color.b, matchBarCurrentOpacity);
+        }
+
+        if (unlockTextIsFading)
+        {
+            timeSinceUnlockTextAppeared += Time.deltaTime;
+            if (timeSinceUnlockTextAppeared>timeThatUnlockTextLasts)
+            {
+                unlockTextIsFading = false;
+                unlockText.color = Color.clear;
+                unlockPulseText.color = Color.clear;
+            }
+            else if (timeSinceUnlockTextAppeared > timeBeforeUnlockTextFades)
+            {
+                unlockPulseText.color = Color.clear;
+                float t = (timeSinceUnlockTextAppeared - timeBeforeUnlockTextFades) / (timeThatUnlockTextLasts - timeBeforeUnlockTextFades);
+                unlockText.color = new Color(unlockText.color.r, unlockText.color.g, unlockText.color.b, Mathf.Lerp(1, 0, t));
+            }
+            else
+            {
+                float t = timeSinceUnlockTextAppeared / (timeThatUnlockPulseLasts);
+                float scale = Mathf.Lerp(1, sizeOfPulse, t);
+                unlockPulseText.transform.localScale = new Vector3(scale, scale, 1);
+                unlockPulseText.color = new Color(unlockText.color.r, unlockText.color.g, unlockText.color.b, Mathf.Lerp(1, 0, t));
+            }
+        }
+
+        if (hexSpin)
+        {
+            rotationAmount += Time.deltaTime;
+            if (hexFacing)
+            {
+                inwardFacingDirection = Mathf.Lerp(inwardFacingDirection, 20, .001f);
+                rotatingLight.intensity = inwardFacingDirection * 2;
+                ambientLight.intensity = 1 - (inwardFacingDirection / 50);
+            }
+            referenceHex.transform.rotation = Quaternion.Euler(0, inwardFacingDirection, rotationAmount);
+            userHex.transform.rotation = Quaternion.Euler(0, -inwardFacingDirection, -rotationAmount);
+
+            rotatingLight.transform.position = new Vector3(Mathf.Sin(rotationAmount/10)*4, Mathf.Cos(rotationAmount / 10) * 4, -10);
+        }
+
+        if (scoreStartedFadingIn&&!scoreFinishedFadingIn)
+        {
+            pointsCurrentOpacity = Mathf.Lerp(pointsCurrentOpacity, 1, .003f);
+            if (pointsCurrentOpacity > .99f)
+            {
+                pointsCurrentOpacity = 1;
+                scoreFinishedFadingIn = true;
+            }
+            scoreText.color = new Color(1, 1, 1, pointsCurrentOpacity);
+        }
+
+        if (timerOn && !timerFinishedFadingIn)
+        {
+            timerCurrentOpacity = Mathf.Lerp(timerCurrentOpacity, 1, .003f);
+            if (timerCurrentOpacity > .99f)
+            {
+                timerCurrentOpacity = 1;
+                timerFinishedFadingIn = true;
+            }
+            timerText.color = new Color(1, 1, 1, timerCurrentOpacity);
+        }
+
+        if (timerOn)
+        {
+            timeLeft -= Time.deltaTime;
+            if (timeLeft < 0)
+            {
+                Submit();
+                failParticles.Play();
+            }
+
+            timerText.text = ""+(int)(timeLeft + 1f);
+        }
+
+        if (unscoredPoints > 0)
+        {
+            timeSinceScoringAppeared += Time.deltaTime;
+            if (timeSinceScoringAppeared>timeBetweenScoreShownAndScored)
+            {
+                timeSinceLastPointScored += Time.deltaTime;
+                while (timeSinceLastPointScored > (maxTimeForScoreToBeScored/160)) // 160 is most possible points in a round.
+                {
+                    timeSinceLastPointScored -= (maxTimeForScoreToBeScored / 160);
+                    unscoredPoints--;
+                    scoreText.text = "Score: " + (totalScore - unscoredPoints);
+                    if (unscoredPoints <= 0)
+                    {
+                        break; //Prevents double-scoring the last point if there's a slow framerate.
+                    }
+                }
+                if (unscoredPoints <= 0)
+                {
+                    HideMatchBar();
+                }
+            }
         }
     }
 
@@ -139,13 +271,12 @@ public class GameController : MonoBehaviour
                 SetBarsToRedTrainingAmount();
                 break;
             case 1:
-                ScoreUserHexagon();
+                matchParticlesPlayed = false;
                 RandomizeReferenceHexagon(2);
                 DisplayBar(1);
                 SetBarsToGreenTrainingAmount();
                 break;
             case 2:
-                ScoreUserHexagon();
                 RandomizeReferenceHexagon(2);
                 SetBarsToZero();
                 BeginHexSpin();
@@ -199,26 +330,32 @@ public class GameController : MonoBehaviour
                 ResetTimer();
                 break;
         }
+        levelNumber++;
+        if (levelNumber > 4)
+        {
+            rotationSpeed += additionalRotationSpeedPerLevel;
+        }
     }
 
     private void BeginHexFacing()
     {
-        throw new NotImplementedException();
+        hexFacing = true;
     }
 
     private void BeginHexSpin()
     {
-        throw new NotImplementedException();
+        hexSpin = true;
     }
 
     private void ResetTimer()
     {
-        throw new NotImplementedException();
+        timeLeft = 30;
     }
 
     private void StartTimer()
     {
-        throw new NotImplementedException();
+        timeLeft = 30;
+        timerOn = true;
     }
 
     private void HideMatchBar()
@@ -232,13 +369,36 @@ public class GameController : MonoBehaviour
     {
         for (int x = 0; x < 10; x++)
         {
-            attributeSliders[0].SetLevel(0);
+            attributeSliders[x].SetLevel(0);
         }
     }
 
     private void ScoreUserHexagon()
     {
-        throw new NotImplementedException();
+        float match = GetMatchAmount(levelNumber);
+        Debug.Log(match);
+        int score = Mathf.RoundToInt(match * 100f);
+        if (timerOn)
+        {
+            score += Mathf.RoundToInt(timeLeft * 2);
+            matchText.text = Mathf.RoundToInt(match * 100f) + "% Match + " + Mathf.RoundToInt(timeLeft * 2) + " Time: " + score + " points!";
+        }
+        else
+        {
+            matchText.text = Mathf.RoundToInt(match * 100f) + "% Match: " + score + " points!";
+        }
+
+        totalScore += score;
+        unscoredPoints += score;
+
+        if (!scoreStartedFadingIn)
+        {
+            scoreStartedFadingIn = true;
+        }
+        matchBarTargetOpacity = 0;
+        matchBarCurrentOpacity = 1;
+        matchText.color = new Color(.3f, 1, .5f, 1);
+        timeSinceScoringAppeared = 0;
     }
 
     //We want to make sure the user drags the bar an appropriate amount in the first few levels, so we ensure the slider starts on
@@ -273,9 +433,11 @@ public class GameController : MonoBehaviour
         barTweenPosition = 0;
         barsAreMoving = true;
         unlockText.color = attributeSliders[bar].colorOfUnlockText;
+        unlockPulseText.color = attributeSliders[bar].colorOfUnlockText;
         unlockText.text = attributeSliders[bar].unlockName + " bar unlocked!";
+        unlockPulseText.text = attributeSliders[bar].unlockName + " bar unlocked!";
         unlockTextIsFading = true;
-        unlockTextCurrentOpacity = 1;
+        timeSinceUnlockTextAppeared = 0;
     }
 
     private void DisplayMatchBar()
@@ -292,17 +454,18 @@ public class GameController : MonoBehaviour
     private void RandomizeReferenceHexagon(int numberOfAttributesRandomized)
     {
         //Base case: Only redness is randomized.
-        referenceAttributes[0] = UnityEngine.Random.Range(.01f, .99f);
+        referenceAttributes[0] = UnityEngine.Random.Range(.1f, .9f);
         referenceAttributes[1] = .25f; //Greenness
         referenceAttributes[2] = 0f;   //Blueness
         referenceAttributes[3] = 0f;   //Metalicity or smoothness, not sure which yet.
         referenceAttributes[4] = 0f;   //Etc.
 
         //Randomize additional attributes.
-        for (int x = 2; x < numberOfAttributesRandomized; x++)
+        for (int x = 2; x <= numberOfAttributesRandomized; x++)
         if (numberOfAttributesRandomized >= x)
         {
-            referenceAttributes[x-1] = UnityEngine.Random.Range(.01f, .99f);
+            referenceAttributes[x-1] = UnityEngine.Random.Range(.1f, .9f);
+                Debug.Log("Reference" + (x - 1) + " randomized to " + referenceAttributes[x - 1]);
         }
 
         referenceMaterial.SetColor("tex_col", new Color(referenceAttributes[0], referenceAttributes[1], referenceAttributes[2]));
@@ -316,11 +479,11 @@ public class GameController : MonoBehaviour
 
     public void UpdateUserHex(int attribute, float value)
     {
-        if (levelNumber == 0&&!matchBarAppeared&&(value!=0&&value!=1&&value!=.25f))
+        if (levelNumber == 1&&!matchBarAppeared&&(value!=0&&value!=1&&value!=.25f))
         {
             DisplayMatchBar();
         }
-        if (levelNumber == 2&&matchBarAppeared && (value != 0 && value != 1 && value != .25f))
+        if (levelNumber == 3&&matchBarAppeared && (value != 0 && value != 1 && value != .25f))
         {
             HideMatchBar();
         }
@@ -328,14 +491,53 @@ public class GameController : MonoBehaviour
 
         userMaterial.SetColor("tex_col", new Color(userAttributes[0], userAttributes[1], userAttributes[2]));
 
-        if (matchBarCurrentOpacity > .01f)
+        if (matchBarCurrentOpacity > .01f&&levelNumber < 3)
         {
-            matchText.text = "Match: " + (int)(GetMatchAmount(levelNumber) * 100f);
+            float match = GetMatchAmount(levelNumber);
+            matchText.text = "Match: " + Mathf.RoundToInt(match * 100f)+"%";
+            if (match > .95f)
+            {
+                matchText.color = new Color(.3f, 1, .5f, matchText.color.a);
+                if (!shownHint2)
+                {
+                    referenceHex.hintParticleSystem.Play();
+                    shownHint2 = true;
+                }
+                if (!matchParticlesPlayed)
+                {
+                    matchParticles.Play();
+                }
+            }
+            else
+            {
+                matchText.color = new Color(1, 1, 1, matchText.color.a);
+            }
         }
     }
 
     private float GetMatchAmount(int levelNumber)
     {
-        throw new NotImplementedException();
+        int numberOfSliders = slidersByLevelNumber[levelNumber];
+        Debug.Log("Level: "+levelNumber+", Sliders: "+ numberOfSliders);
+        float closeness = 0;
+        for (int x = 0; x < numberOfSliders; x++)
+        {
+            Debug.Log("Att: " + userAttributes[x] + ", Ref: " + referenceAttributes[x]);
+            float thisCloseness = 0;
+            if (userAttributes[x]>referenceAttributes[x])
+            {
+                thisCloseness = 1-((userAttributes[x]- referenceAttributes[x]) / (1 - referenceAttributes[x]));
+                //Hypothetical: 1-((      .6         -          .4           ) / (1 -        .4             ))
+                //              1-((.6-.4)/(1-.4)) = 1-(.2/.6) = 1-.33 = .67, which is because right .6 is two thirds of the way from 1 to .4
+            }
+            else
+            {
+                thisCloseness = userAttributes[x] / referenceAttributes[x];
+                //Hypothetical:       .3          /         .4           = .75, which is because right .3 is 34ths of the way from 0 to .4
+            }
+            closeness += thisCloseness / numberOfSliders; //Average them all.
+            Debug.Log(closeness);
+        }
+        return closeness;
     }
 }
