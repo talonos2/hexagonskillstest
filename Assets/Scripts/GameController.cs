@@ -579,6 +579,7 @@ public class GameController : MonoBehaviour
         if (numberOfAttributesRandomized >= x)
         {
             referenceAttributes[x-1] = UnityEngine.Random.Range(.1f, .9f);
+            if (x==4) { referenceAttributes[x - 1] = (referenceAttributes[x - 1] + .1f) / 2f; }
         }
 
         referenceMaterial.SetColor("tex_col", new Color(referenceAttributes[0], referenceAttributes[1], referenceAttributes[2]));
