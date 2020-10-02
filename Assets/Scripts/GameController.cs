@@ -135,7 +135,7 @@ public class GameController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (MenuImage.active)
+            if (MenuImage.activeSelf)
             {
                 HideMenu();
             }
@@ -167,7 +167,7 @@ public class GameController : MonoBehaviour
 
         if (matchBarIsFading)
         {
-            matchBarCurrentOpacity = Mathf.Lerp(matchBarCurrentOpacity, matchBarTargetOpacity, .003f);
+            matchBarCurrentOpacity = Mathf.Lerp(matchBarCurrentOpacity, matchBarTargetOpacity, .005f);
             if (Math.Abs(matchBarCurrentOpacity- matchBarTargetOpacity)<.01)
             {
                 matchBarCurrentOpacity = matchBarTargetOpacity;
@@ -205,7 +205,7 @@ public class GameController : MonoBehaviour
             rotationAmount += Time.deltaTime;
             if (hexFacing)
             {
-                inwardFacingDirection = Mathf.Lerp(inwardFacingDirection, 20, .001f);
+                inwardFacingDirection = Mathf.Lerp(inwardFacingDirection, 20, .003f);
                 rotatingLight.intensity = inwardFacingDirection * 2;
                 ambientLight.intensity = 1 - (inwardFacingDirection / 50);
             }
@@ -217,7 +217,7 @@ public class GameController : MonoBehaviour
 
         if (scoreStartedFadingIn&&!scoreFinishedFadingIn)
         {
-            pointsCurrentOpacity = Mathf.Lerp(pointsCurrentOpacity, 1, .003f);
+            pointsCurrentOpacity = Mathf.Lerp(pointsCurrentOpacity, 1, .005f);
             if (pointsCurrentOpacity > .99f)
             {
                 pointsCurrentOpacity = 1;
@@ -228,7 +228,7 @@ public class GameController : MonoBehaviour
 
         if (timerOn && !timerFinishedFadingIn)
         {
-            timerCurrentOpacity = Mathf.Lerp(timerCurrentOpacity, 1, .003f);
+            timerCurrentOpacity = Mathf.Lerp(timerCurrentOpacity, 1, .005f);
             if (timerCurrentOpacity > .99f)
             {
                 timerCurrentOpacity = 1;
@@ -239,7 +239,7 @@ public class GameController : MonoBehaviour
 
         if (fadeSky && !fadeSkyComplete)
         {
-            skyCurrentOpacity = Mathf.Lerp(skyCurrentOpacity, 0, .001f);
+            skyCurrentOpacity = Mathf.Lerp(skyCurrentOpacity, 0, .003f);
             if (skyCurrentOpacity < .01f)
             {
                 skyCurrentOpacity = 0;
@@ -250,7 +250,7 @@ public class GameController : MonoBehaviour
 
         if (fadeMenuButton && !fadeMenuButtonComplete)
         {
-            fadeMenuCurrentOpacity = Mathf.Lerp(fadeMenuCurrentOpacity, 1, .003f);
+            fadeMenuCurrentOpacity = Mathf.Lerp(fadeMenuCurrentOpacity, 1, .005f);
             if (fadeMenuCurrentOpacity > .99f)
             {
                 fadeMenuCurrentOpacity = 1;
@@ -262,7 +262,7 @@ public class GameController : MonoBehaviour
 
         if (!fadeHintTextComplete)
         {
-            hintTextCurrentOpacity = Mathf.Lerp(hintTextCurrentOpacity, 0, .001f);
+            hintTextCurrentOpacity = Mathf.Lerp(hintTextCurrentOpacity, 0, .003f);
             if (hintTextCurrentOpacity < .01f)
             {
                 hintTextCurrentOpacity = 0;
@@ -311,7 +311,7 @@ public class GameController : MonoBehaviour
     {
         if (barsAreMoving)
         {
-            barTweenPosition = Mathf.Lerp(barTweenPosition, 1, .006f);
+            barTweenPosition = Mathf.Lerp(barTweenPosition, 1, .009f);
             if (barTweenPosition > .99)
             {
                 barTweenPosition = 1;

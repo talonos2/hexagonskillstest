@@ -17,6 +17,11 @@ public class SoundManager : MonoBehaviour
     {
     }
 
+    public void SetSFXVol(float amount)
+    {
+        soundEffectVolume = amount;
+    }
+
     void Awake()
     {
         if (instance == null)
