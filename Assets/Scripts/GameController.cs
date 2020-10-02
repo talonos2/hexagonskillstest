@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -58,19 +59,26 @@ public class GameController : MonoBehaviour
     public TextMeshProUGUI unlockPulseText;
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI hintText;
+    public MeshRenderer backgroundRenderer;
     public ParticleSystem matchParticles;
     public ParticleSystem failParticles;
     public Light rotatingLight;
     public Light ambientLight;
+    public Image menuButton;
+    public TextMeshProUGUI menuButtonText;
+    public GameObject MenuImage;
+    public GameObject BlockAllOtherStuff;
 
     private int levelNumber = 0;
     private float remainingTween;
     private bool moveHexes;
     private Material referenceMaterial;
     private Material userMaterial;
+    private Material skyMaterial;
     private readonly float[] referenceAttributes = new float[10];
     private readonly float[] userAttributes = new float[10];
-    private readonly int[] slidersByLevelNumber = new int[] { 1, 1, 2, 2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    private readonly int[] slidersByLevelNumber = new int[] { 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6};
     private float matchBarTargetOpacity;
     private float matchBarCurrentOpacity;
     private bool matchBarIsFading;
@@ -91,13 +99,20 @@ public class GameController : MonoBehaviour
     private float pointsCurrentOpacity = 0;
     private float timerCurrentOpacity = 0;
     private int totalScore = 0;
-    private int timeUntilPointsAreScored = 0;
     private float timeSinceLastPointScored = 0;
     private int unscoredPoints = 0;
     private bool hexFacing = false;
     private float inwardFacingDirection = 0;
-    private float lightBrightness = 0;
     private float timeSinceScoringAppeared = 0;
+    private float skyCurrentOpacity = 1;
+    private bool fadeSky = false;
+    private bool fadeSkyComplete = false;
+    private float fadeMenuCurrentOpacity = 0;
+    private bool fadeMenuButton = false;
+    private bool fadeMenuButtonComplete = false;
+    private float hintTextCurrentOpacity = 0;
+    private bool fadeHintTextComplete = true;
+
 
     void Start()
     {
@@ -108,10 +123,25 @@ public class GameController : MonoBehaviour
         //using Unity's script execution ordering menu.
         referenceMaterial = referenceHex.GetComponent<MeshRenderer>().sharedMaterial;
         userMaterial = userHex.GetComponent<MeshRenderer>().sharedMaterial;
+
+        skyMaterial = new Material(backgroundRenderer.sharedMaterial);
+        backgroundRenderer.sharedMaterial = skyMaterial;
     }
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (MenuImage.active)
+            {
+                HideMenu();
+            }
+            else
+            {
+                ShowMenu();
+            }
+            return;
+        }
         if (moveHexes)
         {
             remainingTween -= Time.deltaTime;
@@ -204,6 +234,40 @@ public class GameController : MonoBehaviour
             timerText.color = new Color(1, 1, 1, timerCurrentOpacity);
         }
 
+        if (fadeSky && !fadeSkyComplete)
+        {
+            skyCurrentOpacity = Mathf.Lerp(skyCurrentOpacity, 0, .001f);
+            if (skyCurrentOpacity < .01f)
+            {
+                skyCurrentOpacity = 0;
+                fadeSkyComplete = true;
+            }
+            skyMaterial.SetFloat("tex_trans", 1-skyCurrentOpacity);
+        }
+
+        if (fadeMenuButton && !fadeMenuButtonComplete)
+        {
+            fadeMenuCurrentOpacity = Mathf.Lerp(fadeMenuCurrentOpacity, 1, .003f);
+            if (fadeMenuCurrentOpacity > .99f)
+            {
+                fadeMenuCurrentOpacity = 1;
+                fadeMenuButtonComplete = true;
+            }
+            menuButton.color = new Color(menuButton.color.r, menuButton.color.g, menuButton.color.b, fadeMenuCurrentOpacity);
+            menuButtonText.color = new Color(menuButtonText.color.r, menuButtonText.color.g, menuButtonText.color.b, fadeMenuCurrentOpacity);
+        }
+
+        if (!fadeHintTextComplete)
+        {
+            hintTextCurrentOpacity = Mathf.Lerp(hintTextCurrentOpacity, 0, .001f);
+            if (hintTextCurrentOpacity < .01f)
+            {
+                hintTextCurrentOpacity = 0;
+                fadeHintTextComplete = true;
+            }
+            hintText.color = new Color(1, 1, 1, hintTextCurrentOpacity);
+        }
+
         if (timerOn)
         {
             timeLeft -= Time.deltaTime;
@@ -262,6 +326,19 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void Submit()
     {
+        if (levelNumber < 3)
+        {
+            float match = GetMatchAmount(slidersByLevelNumber[levelNumber]);
+            {
+                if (match < .95f)
+                {
+                    hintText.color = Color.white;
+                    hintTextCurrentOpacity = 1;
+                    fadeHintTextComplete = false;
+                    return;
+                }
+            }
+        }
         switch (levelNumber)
         {
             case 0:
@@ -288,10 +365,8 @@ public class GameController : MonoBehaviour
                 StartTimer();
                 break;
             case 4:
-                ScoreUserHexagon();
-                RandomizeReferenceHexagon(2);
-                SetBarsToZero();
-                ResetTimer();
+                BasicLevel(2);
+                fadeMenuButton = true;
                 break;
             case 5:
                 ScoreUserHexagon();
@@ -301,6 +376,10 @@ public class GameController : MonoBehaviour
                 ResetTimer();
                 break;
             case 6:
+                BasicLevel(3);
+                fadeSky = true;
+                break;
+            case 7:
                 ScoreUserHexagon();
                 RandomizeReferenceHexagon(4);
                 DisplayBar(3);
@@ -308,26 +387,42 @@ public class GameController : MonoBehaviour
                 SetBarsToZero();
                 ResetTimer();
                 break;
-            case 7:
+            case 8:
+                BasicLevel(4);
+                break;
+            case 9:
                 ScoreUserHexagon();
                 RandomizeReferenceHexagon(5);
                 DisplayBar(4);
                 SetBarsToZero();
                 ResetTimer();
                 break;
-            case 8:
+            case 10:
+                BasicLevel(5);
+                break;
+            case 11:
                 ScoreUserHexagon();
                 RandomizeReferenceHexagon(6);
                 DisplayBar(5);
                 SetBarsToZero();
                 ResetTimer();
                 break;
-            case 9:
+            case 12:
+                BasicLevel(6);
+                break;
+            case 13:
                 ScoreUserHexagon();
+                unlockText.text = "GAME OVER. Final Score: " + totalScore;
+                unlockText.color = Color.white;
+                hintText.text = "(You can keep messing with the sliders or\n" +
+                                    "hit testing the polygon if you want.)";
+                hintText.color = Color.white;
+                timerOn = false;
+                timerText.gameObject.SetActive(false);
+                break;
+            default:
                 RandomizeReferenceHexagon(6);
-                DisplayBar(5);
-                SetBarsToZero();
-                ResetTimer();
+                DisplayMatchBar();
                 break;
         }
         levelNumber++;
@@ -335,6 +430,14 @@ public class GameController : MonoBehaviour
         {
             rotationSpeed += additionalRotationSpeedPerLevel;
         }
+    }
+
+    private void BasicLevel(int sliders)
+    {
+        ScoreUserHexagon();
+        RandomizeReferenceHexagon(sliders);
+        SetBarsToZero();
+        ResetTimer();
     }
 
     private void BeginHexFacing()
@@ -376,7 +479,6 @@ public class GameController : MonoBehaviour
     private void ScoreUserHexagon()
     {
         float match = GetMatchAmount(levelNumber);
-        Debug.Log(match);
         int score = Mathf.RoundToInt(match * 100f);
         if (timerOn)
         {
@@ -465,7 +567,6 @@ public class GameController : MonoBehaviour
         if (numberOfAttributesRandomized >= x)
         {
             referenceAttributes[x-1] = UnityEngine.Random.Range(.1f, .9f);
-                Debug.Log("Reference" + (x - 1) + " randomized to " + referenceAttributes[x - 1]);
         }
 
         referenceMaterial.SetColor("tex_col", new Color(referenceAttributes[0], referenceAttributes[1], referenceAttributes[2]));
@@ -524,11 +625,9 @@ public class GameController : MonoBehaviour
     private float GetMatchAmount(int levelNumber)
     {
         int numberOfSliders = slidersByLevelNumber[levelNumber];
-        Debug.Log("Level: "+levelNumber+", Sliders: "+ numberOfSliders);
         float closeness = 0;
         for (int x = 0; x < numberOfSliders; x++)
         {
-            Debug.Log("Att: " + userAttributes[x] + ", Ref: " + referenceAttributes[x]);
             float thisCloseness = 0;
             if (userAttributes[x]>referenceAttributes[x])
             {
@@ -542,8 +641,28 @@ public class GameController : MonoBehaviour
                 //Hypothetical:       .3          /         .4           = .75, which is because right .3 is 34ths of the way from 0 to .4
             }
             closeness += thisCloseness / numberOfSliders; //Average them all.
-            Debug.Log(closeness);
         }
         return closeness;
+    }
+
+    public void ShowMenu()
+    {
+        Time.timeScale = .00001f;
+        MenuImage.SetActive(true);
+        BlockAllOtherStuff.SetActive(true);
+    }
+
+    public void HideMenu()
+    {
+        Time.timeScale = 1;
+        MenuImage.SetActive(false);
+        BlockAllOtherStuff.SetActive(false);
+    }
+
+    public void ResideHexes(float number)
+    {
+        int realNumber = Mathf.RoundToInt(number);
+        userHex.MakeARegularPolygon(realNumber);
+        referenceHex.MakeARegularPolygon(realNumber);
     }
 }

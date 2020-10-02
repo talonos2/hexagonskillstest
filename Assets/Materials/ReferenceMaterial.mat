@@ -20,6 +20,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - Texture2D_48C7216B:
+        m_Texture: {fileID: 2800000, guid: dd803e98dc2cc1242952393bb4344d50, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -56,6 +60,30 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - tex_ambient:
+        m_Texture: {fileID: 2800000, guid: fd0e0a3c6fdc81c42bee2ca4d913dddb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - tex_height:
+        m_Texture: {fileID: 2800000, guid: bf54a301cb05b904dace1adff321dfb4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - tex_moss:
+        m_Texture: {fileID: 2800000, guid: 447afb06530e1694e8b3820abe33ad1c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - tex_moss_ambient:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - tex_moss_norm:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - tex_rough:
+        m_Texture: {fileID: 2800000, guid: df3c01c22d982d44893bedff63dd0f3e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -74,6 +102,10 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     - is_3d: 1
+    - tex_metalness: 0
+    - tex_mossiness: 0
+    - tex_rock: 0
+    - tex_trans: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

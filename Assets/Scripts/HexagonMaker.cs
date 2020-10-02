@@ -95,7 +95,7 @@ public class HexagonMaker : MonoBehaviour
     //Normally, I'd ask the artists to make meshes and reference them as prefabs, but I think it'd be easier
     //to make my own mesh here than to find them online, plus it lets you see me do some of the trig I skipped
     //during colision detection.
-    private void MakeARegularPolygon (int sides)
+    public void MakeARegularPolygon (int sides)
     {
         Mesh mesh = new Mesh();
         int vertsNeeded = 1 + (3 * sides);
@@ -138,8 +138,21 @@ public class HexagonMaker : MonoBehaviour
             tris[offsetInTriArray + 11] = (x == sides - 1 ? 0 : x + 1); //This side's secondary corner, can wrap around.
         }
 
+        //All tris in. Make UVs.
+
+        Vector2[] uv = new Vector2[vertsNeeded];
+        float furthestOutAVertexCanBe = lengthOfDepthFaces;
+        for (int x = 0; x < vertsNeeded; x++)
+        {
+            //Running out of time. This quick and dirty mapping will basically project the texture on the surface of the poly,
+            //which feels cheaty, but which will take less than 15 minutes.
+            uv[x] = new Vector2((verts[x].x+ furthestOutAVertexCanBe)/(furthestOutAVertexCanBe*2), (verts[x].y + furthestOutAVertexCanBe) / (furthestOutAVertexCanBe * 2));
+            Debug.Log("Vert " + verts[x] + ", UV" + uv[x]);
+        }
+
         mesh.vertices = verts;
         mesh.triangles = tris;
+        mesh.uv = uv;
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
         meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; //Disables shadow acne.
