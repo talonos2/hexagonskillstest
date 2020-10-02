@@ -193,11 +193,13 @@ public class HexagonMaker : MonoBehaviour
             hintParticleSystem.Stop();
             hintParticleSystem.Clear();
             hintShown = true;
+            SoundManager.instance.PlaySound("Click2", 1);
         }
         else
         {
             timeSinceLastClick = 0;
             shapePulseAmount = shapePulseTime;
+            SoundManager.instance.PlaySound("MenuClick", 1);
         }
     }
 

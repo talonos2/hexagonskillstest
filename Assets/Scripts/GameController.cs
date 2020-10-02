@@ -126,6 +126,9 @@ public class GameController : MonoBehaviour
 
         skyMaterial = new Material(backgroundRenderer.sharedMaterial);
         backgroundRenderer.sharedMaterial = skyMaterial;
+
+        MusicManager.instance.SetRelaxedMusic(MusicManager.AIR);
+        MusicManager.instance.SetIntenseMusic(MusicManager.AIR_C);
     }
 
     void Update()
@@ -346,6 +349,10 @@ public class GameController : MonoBehaviour
                 RandomizeReferenceHexagon(1);
                 DisplayBar(0);
                 SetBarsToRedTrainingAmount();
+                MusicManager.instance.FadeMusic(MusicManager.AIR, 2, 1f);
+                //Play intense music so quietly you cant hear it. Needed to keep it in sync with the main music
+                //to that they line up when the intense music fades in.
+                MusicManager.instance.FadeMusic(MusicManager.AIR_C, 2, .000001f);
                 break;
             case 1:
                 matchParticlesPlayed = false;
@@ -386,6 +393,7 @@ public class GameController : MonoBehaviour
                 BeginHexFacing();
                 SetBarsToZero();
                 ResetTimer();
+                MusicManager.instance.TurnOnIntenseMusic();
                 break;
             case 8:
                 BasicLevel(4);
@@ -419,6 +427,9 @@ public class GameController : MonoBehaviour
                 hintText.color = Color.white;
                 timerOn = false;
                 timerText.gameObject.SetActive(false);
+                MusicManager.instance.TurnOffIntenseMusic();
+                MusicManager.instance.FadeMusic(MusicManager.AIR, 5, .4f);
+                SoundManager.instance.PlaySound("GameOver", 1);
                 break;
             default:
                 RandomizeReferenceHexagon(6);
@@ -540,6 +551,7 @@ public class GameController : MonoBehaviour
         unlockPulseText.text = attributeSliders[bar].unlockName + " bar unlocked!";
         unlockTextIsFading = true;
         timeSinceUnlockTextAppeared = 0;
+        SoundManager.instance.PlaySound("New Unlock", 1);
     }
 
     private void DisplayMatchBar()
@@ -650,6 +662,7 @@ public class GameController : MonoBehaviour
         Time.timeScale = .00001f;
         MenuImage.SetActive(true);
         BlockAllOtherStuff.SetActive(true);
+        SoundManager.instance.PlaySound("MenuClick", 1);
     }
 
     public void HideMenu()
@@ -657,6 +670,7 @@ public class GameController : MonoBehaviour
         Time.timeScale = 1;
         MenuImage.SetActive(false);
         BlockAllOtherStuff.SetActive(false);
+        SoundManager.instance.PlaySound("MenuClick", 1);
     }
 
     public void ResideHexes(float number)
