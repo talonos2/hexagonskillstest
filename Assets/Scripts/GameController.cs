@@ -469,6 +469,9 @@ public class GameController : MonoBehaviour
         }
 
         referenceMaterial.SetColor("tex_col", new Color(referenceAttributes[0], referenceAttributes[1], referenceAttributes[2]));
+        referenceMaterial.SetFloat("tex_metalness", referenceAttributes[3]);
+        referenceMaterial.SetFloat("tex_trans", referenceAttributes[4]);
+        referenceMaterial.SetFloat("tex_rock", referenceAttributes[5]);
     }
 
     private void DoFirstTweening()
@@ -490,6 +493,9 @@ public class GameController : MonoBehaviour
         userAttributes[attribute] = value;
 
         userMaterial.SetColor("tex_col", new Color(userAttributes[0], userAttributes[1], userAttributes[2]));
+        userMaterial.SetFloat("tex_metalness", userAttributes[3]);
+        userMaterial.SetFloat("tex_trans", userAttributes[4]);
+        userMaterial.SetFloat("tex_rock", userAttributes[5]);
 
         if (matchBarCurrentOpacity > .01f&&levelNumber < 3)
         {
